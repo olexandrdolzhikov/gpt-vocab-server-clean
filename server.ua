@@ -9,7 +9,7 @@ app = Flask(__name__)
 
 # Авторизация через Google Sheets API
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = Credentials.from_service_account_file("credentials.json", scopes=scope)
+creds = Credentials.from_service_account_file("/etc/secrets/credentials.json", scopes=scope)
 client = gspread.authorize(creds)
 
 # Открытие таблицы по ID
