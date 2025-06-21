@@ -23,37 +23,33 @@ def load_data():
 
 # Обновление ячеек по ID
 def update_row_by_id(row_id, updates: dict):
+    records = sheet.get_all_records()
+    for i, row in enumerate(records, start=2):  # Начинаем с 2-й строки (первая — заголовки)
+        if str(row.get("id")) == str(row_id):
+            for key, value in updates.items():
+                col = sheet.row_values(1).index(key) + 1
+                sheet.update_cell(i, col, value)
+            return True
+    return False
+
+# Роут: получить все данные
+@app.route('/data', methods=['GET'])
+def get_data():
     df = load_data()
-    idx_list = df.index[df["ID"] == row_id].tolist()
-    if not idx_list:
-        return False
-    row_index = idx_list[0] + 2
-    for col, val in updates.items():
-        col_index = df.columns.get_loc(col) + 1
-        sheet.update_cell(row_index, col_index, val)
-    return True
+    return df.to_json(orient="records")
 
-# Фильтрация по 1-N параметрам
-def filter_data(filters: dict):
-    df = load_data()
-    for col, val in filters.items():
-        df = df[df[col] == val]
-    return df.to_dict(orient="records")
-
-@app.route("/")
-def home():
-    return "Vocabulary API is running!"
-
-@app.route("/get", methods=["POST"])
-def get_filtered():
-    filters = request.json
-    return jsonify(filter_data(filters))
-
-@app.route("/update", methods=["POST"])
-def update():
-    data = request.json
-    word_id = data.pop("ID", None)
-    if not word_id:
-        return jsonify({"error": "Missing ID"}), 400
-    success = update_row_by_id(word_id, data)
+# Роут: обновить прогресс
+@app.route('/update', methods=['POST'])
+def update_progress():
+    content = request.json
+    row_id = content.get("id")
+    updates = content.get("updates", {})
+    if not row_id or not updates:
+        return jsonify({"error": "Missing 'id' or 'updates'"}), 400
+    success = update_row_by_id(row_id, updates)
     return jsonify({"success": success})
+
+# Запуск Flask-сервера
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
