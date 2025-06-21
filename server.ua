@@ -62,6 +62,26 @@ def get_data_by_progress():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# Роут: обновить использование слова (used_correctly)
+@app.route('/update_usage', methods=['POST'])
+def update_usage():
+    content = request.json
+    row_id = content.get("id")
+    used_correctly = content.get("used_correctly")
+
+    if row_id is None:
+        return jsonify({"error": "Missing 'id'"}), 400
+
+    # Если значение передано — проверяем, что это число
+    if used_correctly != "":
+        try:
+            used_correctly = int(used_correctly)
+        except ValueError:
+            return jsonify({"error": "'used_correctly' must be an integer or empty string"}), 400
+
+    success = update_row_by_id(row_id, {"used_correctly": used_correctly})
+    return jsonify({"success": success})
+
 # Запуск Flask-сервера
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
