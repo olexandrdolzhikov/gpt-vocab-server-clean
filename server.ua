@@ -16,29 +16,30 @@ client = gspread.authorize(creds)
 SHEET_ID = "1H2EHXGZ5uHs9tsvD6eoBibaMLbZ37COhsewiKerDJZo"
 sheet = client.open_by_key(SHEET_ID).sheet1
 
-# Загрузка данных в DataFrame
+# Загрузка всех данных в DataFrame
 def load_data():
     data = sheet.get_all_records()
     return pd.DataFrame(data)
 
-# Обновление ячеек по ID
+# Обновление строки по ID и ключам из updates
 def update_row_by_id(row_id, updates: dict):
     records = sheet.get_all_records()
-    for i, row in enumerate(records, start=2):  # Начинаем с 2-й строки (первая — заголовки)
+    for i, row in enumerate(records, start=2):  # начиная с 2, так как 1-я строка — заголовки
         if str(row.get("id")) == str(row_id):
             for key, value in updates.items():
-                col = sheet.row_values(1).index(key) + 1
-                sheet.update_cell(i, col, value)
+                if key in sheet.row_values(1):  # проверяем, что ключ существует
+                    col = sheet.row_values(1).index(key) + 1
+                    sheet.update_cell(i, col, value)
             return True
     return False
 
-# Роут: получить все данные
+# Получить все слова
 @app.route('/data', methods=['GET'])
 def get_data():
     df = load_data()
     return df.to_json(orient="records")
 
-# Роут: обновить прогресс и любые поля
+# Обновить произвольные поля по ID
 @app.route('/update', methods=['POST'])
 def update_progress():
     content = request.json
@@ -49,7 +50,7 @@ def update_progress():
     success = update_row_by_id(row_id, updates)
     return jsonify({"success": success})
 
-# Роут: получить одно слово по прогрессу
+# Получить случайное слово по прогрессу
 @app.route('/data_by_progress', methods=['GET'])
 def get_data_by_progress():
     try:
@@ -63,7 +64,7 @@ def get_data_by_progress():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Роут: обновить использование слова (used_correctly)
+# Обновить used_correctly
 @app.route('/update_usage', methods=['POST'])
 def update_usage():
     content = request.json
@@ -82,7 +83,7 @@ def update_usage():
     success = update_row_by_id(row_id, {"used_correctly": used_correctly})
     return jsonify({"success": success})
 
-# Запуск Flask-сервера
+# Запуск сервера
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
