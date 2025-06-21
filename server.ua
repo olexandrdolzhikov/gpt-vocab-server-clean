@@ -49,6 +49,19 @@ def update_progress():
     success = update_row_by_id(row_id, updates)
     return jsonify({"success": success})
 
+# Роут: получить слова по прогрессу
+@app.route('/data_by_progress', methods=['GET'])
+def get_data_by_progress():
+    try:
+        progress = request.args.get("progress")
+        if progress is None:
+            return jsonify({"error": "Missing 'progress' parameter"}), 400
+        df = load_data()
+        filtered = df[df["progress"] == int(progress)]
+        return filtered.to_json(orient="records")
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 # Запуск Flask-сервера
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
