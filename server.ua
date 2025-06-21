@@ -38,7 +38,7 @@ def get_data():
     df = load_data()
     return df.to_json(orient="records")
 
-# Роут: обновить прогресс
+# Роут: обновить прогресс и любые поля
 @app.route('/update', methods=['POST'])
 def update_progress():
     content = request.json
@@ -49,7 +49,7 @@ def update_progress():
     success = update_row_by_id(row_id, updates)
     return jsonify({"success": success})
 
-# Роут: получить слова по прогрессу
+# Роут: получить одно слово по прогрессу
 @app.route('/data_by_progress', methods=['GET'])
 def get_data_by_progress():
     try:
@@ -73,7 +73,6 @@ def update_usage():
     if row_id is None:
         return jsonify({"error": "Missing 'id'"}), 400
 
-    # Если значение передано — проверяем, что это число
     if used_correctly != "":
         try:
             used_correctly = int(used_correctly)
