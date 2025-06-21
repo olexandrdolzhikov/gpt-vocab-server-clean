@@ -58,7 +58,8 @@ def get_data_by_progress():
             return jsonify({"error": "Missing 'progress' parameter"}), 400
         df = load_data()
         filtered = df[df["progress"] == int(progress)]
-        return filtered.to_json(orient="records")
+sample = filtered.sample(1) if not filtered.empty else pd.DataFrame()
+return sample.to_json(orient="records")
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
